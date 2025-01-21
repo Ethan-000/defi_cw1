@@ -5,18 +5,18 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract PokemonCards is ERC721, Ownable {
-    using SafeMath for uint256;
-
     string public PokemonCards_PROVENANCE = "";
     uint public constant maxPokemonCardsPurchase = 10;
     uint256 public constant MAX_PokemonCards = 10000;
     bool public saleIsActive = false;
     uint256 public standardPokemonCardsCount = 0;
+    uint256 private _tokenIds;
+    string _baseTokenURI;
 
     mapping(address => bool) public whitelistOneMint;
     mapping(address => bool) public whitelistTwoMint;
 
-    constructor() public ERC721("PokemonCards", "PKMN")  {}
+    constructor() ERC721("PokemonCards", "PKMN") Ownable(msg.sender) {}
 
     function setProvenanceHash(string memory provenanceHash) public onlyOwner {
         PokemonCards_PROVENANCE = provenanceHash;
@@ -51,8 +51,8 @@ contract PokemonCards is ERC721, Ownable {
             mintAmount = 1;
         }
         uint i;
-        for (i = 0; i < mintAmount && totalSupply() < 10000; i++) {
-            uint supply = totalSupply();
+        for (i = 0; i < mintAmount && _tokenIds < 10000; i++) {
+            uint supply = _tokenIds;
             _safeMint(msg.sender, supply);
         }
     }
@@ -61,32 +61,29 @@ contract PokemonCards is ERC721, Ownable {
         saleIsActive = !saleIsActive;
     }
 
-    function setBaseURI(string memory baseURI) public onlyOwner {
-        _setBaseURI(baseURI);
-    }
-
     function mintPokemonCards(uint256 numberOfTokens) public payable {
         require(saleIsActive, "Sale must be active to mint PokemonCardss");
         require(numberOfTokens <= maxPokemonCardsPurchase, "Can only mint up to 10 tokens at a time");
-        require(standardPokemonCardsCount.add(numberOfTokens) <= MAX_PokemonCards, "Purchase would exceed max supply of PokemonCards");
+        require(standardPokemonCardsCount + numberOfTokens <= MAX_PokemonCards, "Purchase would exceed max supply of PokemonCards");
         uint256 PokemonCardsPrice;
         if (numberOfTokens == 10) {
             PokemonCardsPrice = 60000000000000000; // 0.06 ETH
-            require(PokemonCardsPrice.mul(numberOfTokens) <= msg.value, "Ether value sent is not correct");
+            require(PokemonCardsPrice * numberOfTokens <= msg.value, "Ether value sent is not correct");
         } else if (numberOfTokens >= 15) {
             PokemonCardsPrice = 70000000000000000; // 0.07 ETH
-            require(PokemonCardsPrice.mul(numberOfTokens) <= msg.value, "Ether value sent is not correct");
+            require(PokemonCardsPrice * numberOfTokens <= msg.value, "Ether value sent is not correct");
         } else if (numberOfTokens >= 5) {
             PokemonCardsPrice = 75000000000000000; // 0.075 ETH
-            require(PokemonCardsPrice.mul(numberOfTokens) <= msg.value, "Ether value sent is not correct");
+            require(PokemonCardsPrice * numberOfTokens <= msg.value, "Ether value sent is not correct");
         } else {
             PokemonCardsPrice = 80000000000000000; // 0.08 ETH
-            require(PokemonCardsPrice.mul(numberOfTokens) <= msg.value, "Ether value sent is not correct");
+            require(PokemonCardsPrice * numberOfTokens <= msg.value, "Ether value sent is not correct");
         }
 
         for(uint i = 0; i < numberOfTokens; i++) {
             if (standardPokemonCardsCount < MAX_PokemonCards) {
-                _safeMint(msg.sender, totalSupply());
+                _tokenIds++;
+                _safeMint(msg.sender, _tokenIds);
                 standardPokemonCardsCount++;
             }
         }

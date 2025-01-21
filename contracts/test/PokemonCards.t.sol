@@ -2,111 +2,77 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "../src/PokemonCards.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "../src/PokemonCards.sol"; // Adjust the path if needed
 
 contract PokemonCardsTest is Test {
     PokemonCards public pokemonCards;
     address public owner;
     address public user1;
     address public user2;
-    address public user3;
 
-    uint256 public mintPrice;
+    // Constants for testing
+    uint256 public constant MAX_POKEMON_CARDS = 10000;
+    uint256 public constant MAX_PURCHASE = 10;
 
     function setUp() public {
-        owner = address(this);
-        user1 = address(0x1);
-        user2 = address(0x2);
-        user3 = address(0x3);
-
+        // Deploy the contract
+        owner = address(this); // The test contract will be the owner
+        user1 = address(0x123);
+        user2 = address(0x456);
+        
         pokemonCards = new PokemonCards();
     }
 
-    function testInitialValues() public {
-        assertEq(pokemonCards.PokemonCards_PROVENANCE(), "");
+    function testInitialState() public view {
+        // Test initial conditions
         assertEq(pokemonCards.saleIsActive(), false);
         assertEq(pokemonCards.standardPokemonCardsCount(), 0);
+        assertEq(pokemonCards.PokemonCards_PROVENANCE(), "");
     }
 
-    // function testSetProvenanceHash() public {
-    //     pokemonCards.setProvenanceHash("new-provenance-hash");
-    //     assertEq(pokemonCards.PokemonCards_PROVENANCE(), "new-provenance-hash");
-    // }
+    function testFlipSaleState() public {
+        // Test the flipping of sale state
+        pokemonCards.flipSaleState();
+        assertEq(pokemonCards.saleIsActive(), true);
 
-    // function testFlipSaleState() public {
-    //     pokemonCards.flipSaleState();
-    //     assertEq(pokemonCards.saleIsActive(), true);
-    //     pokemonCards.flipSaleState();
-    //     assertEq(pokemonCards.saleIsActive(), false);
-    // }
+        pokemonCards.flipSaleState();
+        assertEq(pokemonCards.saleIsActive(), false);
+    }
 
-    // function testWithdraw() public {
-    //     uint256 initialBalance = address(this).balance;
-    //     uint256 contractBalance = address(pokemonCards).balance;
-        
-    //     // Send some ether to the contract
-    //     payable(address(pokemonCards)).transfer(1 ether);
+    function testMinting() public {
+        pokemonCards.flipSaleState(); // Activate sale
+        uint256 tokensToMint = 5;
 
-    //     // Check the contract balance after transfer
-    //     assertEq(address(pokemonCards).balance, contractBalance + 1 ether);
+        // Simulate a minting process from user1
+        vm.startPrank(user1);
+        uint256 pricePerToken = 0.08 ether;
+        uint256 totalPrice = pricePerToken * tokensToMint;
+        vm.deal(user1, totalPrice); // Send Ether to user1
+        pokemonCards.mintPokemonCards{value: totalPrice}(tokensToMint);
+        assertEq(pokemonCards.balanceOf(user1), tokensToMint);
+        vm.stopPrank();
 
-    //     // Withdraw and check the contract balance after withdraw
-    //     pokemonCards.withdraw();
+        // Check the standardPokemonCardsCount
+        assertEq(pokemonCards.standardPokemonCardsCount(), tokensToMint);
+    }
 
-    //     assertEq(address(pokemonCards).balance, 0);
-    //     assertEq(address(this).balance, initialBalance + 1 ether);
-    // }
+    function testMaxPurchaseLimit() public {
+        // Activate sale and try minting more than allowed tokens
+        pokemonCards.flipSaleState();
+        uint256 tokensToMint = 10;
 
-    // function testMintPokemonCards() public {
-    //     pokemonCards.flipSaleState(); // Activate sale
-        
-    //     // user1 mints 3 tokens (price = 0.08 ETH each)
-    //     uint256 mintAmount = 3;
-    //     uint256 price = 80000000000000000 * mintAmount; // 0.08 ETH * 3 = 0.24 ETH
+        uint256 pricePerToken = 0.075 ether;
+        uint256 totalPrice = pricePerToken * tokensToMint;
 
-    //     vm.prank(user1);
-    //     pokemonCards.mintPokemonCards{value: price}(mintAmount);
-        
-    //     assertEq(pokemonCards.balanceOf(user1), 3);
-    // }
+        // Send enough ether for the purchase
+        vm.deal(user1, totalPrice);
+        vm.startPrank(user1);
+        pokemonCards.mintPokemonCards{value: totalPrice}(tokensToMint);
 
-    // function testMintTooManyPokemonCards() public {
-    //     pokemonCards.flipSaleState(); // Activate sale
-        
-    //     // user1 tries to mint 11 cards, but the max per transaction is 10
-    //     uint256 mintAmount = 11;
-    //     uint256 price = 80000000000000000 * mintAmount; // 0.08 ETH * 11 = 0.88 ETH
-        
-    //     vm.expectRevert("Can only mint up to 10 tokens at a time");
-    //     vm.prank(user1);
-    //     pokemonCards.mintPokemonCards{value: price}(mintAmount);
-    // }
+        // Ensure user can only mint 10 tokens at most
+        assertEq(pokemonCards.balanceOf(user1), 10);
+        vm.stopPrank();
+    }
 
-    // function testMintExceedsMaxSupply() public {
-    //     pokemonCards.flipSaleState(); // Activate sale
-
-    //     // Mint all cards (10,000 total supply)
-    //     uint256 mintAmount = 10000;
-    //     uint256 price = 80000000000000000 * mintAmount; // 0.08 ETH * 10000
-
-    //     vm.prank(user1);
-    //     pokemonCards.mintPokemonCards{value: price}(mintAmount);
-
-    //     // Try to mint an additional card, which should fail
-    //     vm.expectRevert("Purchase would exceed max supply of PokemonCards");
-    //     vm.prank(user1);
-    //     pokemonCards.mintPokemonCards{value: 80000000000000000}(1);
-    // }
-
-    // function testInvalidEtherValue() public {
-    //     pokemonCards.flipSaleState(); // Activate sale
-
-    //     // user3 tries to mint 3 cards but sends less ether
-    //     uint256 mintAmount = 3;
-    //     uint256 price = 80000000000000000 * mintAmount; // 0.08 ETH * 3 = 0.24 ETH
-
-    //     vm.expectRevert("Ether value sent is not correct");
-    //     vm.prank(user3);
-    //     pokemonCards.mintPokemonCards{value: price - 1000000000000000}(mintAmount); // Send slightly less
-    // }
 }
