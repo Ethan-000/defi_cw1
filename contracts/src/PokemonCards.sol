@@ -69,10 +69,10 @@ contract PokemonCards is ERC721, Ownable {
         if (numberOfTokens == 10) {
             PokemonCardsPrice = 60000000000000000; // 0.06 ETH
             require(PokemonCardsPrice * numberOfTokens <= msg.value, "Ether value sent is not correct");
-        } else if (numberOfTokens >= 15) {
+        } else if (numberOfTokens >= 6) {
             PokemonCardsPrice = 70000000000000000; // 0.07 ETH
             require(PokemonCardsPrice * numberOfTokens <= msg.value, "Ether value sent is not correct");
-        } else if (numberOfTokens >= 5) {
+        } else if (numberOfTokens >= 3) {
             PokemonCardsPrice = 75000000000000000; // 0.075 ETH
             require(PokemonCardsPrice * numberOfTokens <= msg.value, "Ether value sent is not correct");
         } else {
