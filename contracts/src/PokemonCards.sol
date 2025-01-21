@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.0 <0.8.0;
 
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract PokemonCards is ERC721Enumerable, Ownable {
+contract PokemonCards is ERC721, Ownable {
+    using SafeMath for uint256;
+
     string public PokemonCards_PROVENANCE = "";
     uint public constant maxPokemonCardsPurchase = 10;
     uint256 public constant MAX_PokemonCards = 10000;
@@ -14,7 +16,7 @@ contract PokemonCards is ERC721Enumerable, Ownable {
     mapping(address => bool) public whitelistOneMint;
     mapping(address => bool) public whitelistTwoMint;
 
-    constructor(address initialOwner) ERC721("PokemonCards", "PKMN") Ownable(initialOwner) {}
+    constructor() public ERC721("PokemonCards", "PKMN")  {}
 
     function setProvenanceHash(string memory provenanceHash) public onlyOwner {
         PokemonCards_PROVENANCE = provenanceHash;
@@ -60,7 +62,7 @@ contract PokemonCards is ERC721Enumerable, Ownable {
     }
 
     function setBaseURI(string memory baseURI) public onlyOwner {
-        super._setBaseURI(baseURI);
+        _setBaseURI(baseURI);
     }
 
     function mintPokemonCards(uint256 numberOfTokens) public payable {

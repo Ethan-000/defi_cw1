@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.7.0;
+pragma solidity >=0.6.0 <0.8.0;
 
-import "forge-std/Test.sol";
-import "../src/PokemonCards.sol";
-import {Vm} from "forge-std/Vm.sol";
+import "forge-std/Test.sol"; // Use only forge-std for testing
+import "../src/PokemonCards.sol"; // Path to your contract
+import {Vm} from "forge-std/Vm.sol"; // To mock external calls and deal ether
 
 contract PokemonCardsTest is Test {
     PokemonCards public pokemonCards;
@@ -16,7 +16,7 @@ contract PokemonCardsTest is Test {
 
     function setUp() public {
         owner = address(this);
-        pokemonCards = new PokemonCards();
+        pokemonCards = new PokemonCards(); // Make sure constructor is correct
     }
 
     // 1. Test that the initial values are set correctly.
