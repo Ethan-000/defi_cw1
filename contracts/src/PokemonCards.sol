@@ -16,10 +16,10 @@ contract PokemonCards is ERC721, Ownable, ReentrancyGuard {
     string public PokemonCards_PROVENANCE = "";
     uint256 public constant MAX_POKEMON_CARDS_PURCHASE = 10;
     uint256 public constant MAX_POKEMON_CARDS = 10000;
-    uint256 public constant PRICE_TEN_TOKENS = 0.06 ether;    // Price for 10 tokens
-    uint256 public constant PRICE_SIX_TO_NINE = 0.07 ether;   // Price for 6-9 tokens
-    uint256 public constant PRICE_THREE_TO_FIVE = 0.075 ether; // Price for 3-5 tokens
-    uint256 public constant PRICE_ONE_TO_TWO = 0.08 ether;    // Price for 1-2 tokens
+    uint256 public constant PRICE_TEN_TOKENS = 0.000006 ether;    // Price for 10 tokens
+    uint256 public constant PRICE_SIX_TO_NINE = 0.000007 ether;   // Price for 6-9 tokens
+    uint256 public constant PRICE_THREE_TO_FIVE = 0.0000075 ether; // Price for 3-5 tokens
+    uint256 public constant PRICE_ONE_TO_TWO = 0.000008 ether;    // Price for 1-2 tokens
     
     bool public saleIsActive = false;
     bool public isContractPaused = false;

@@ -101,10 +101,10 @@ contract PokemonCardsTest is Test {
     }
 
     function testPriceCalculation() public view {
-        assertEq(pokemonCards.calculatePrice(10), 0.06 ether);
-        assertEq(pokemonCards.calculatePrice(6), 0.07 ether);
-        assertEq(pokemonCards.calculatePrice(3), 0.075 ether);
-        assertEq(pokemonCards.calculatePrice(1), 0.08 ether);
+        assertEq(pokemonCards.calculatePrice(10), 0.000006 ether);
+        assertEq(pokemonCards.calculatePrice(6), 0.000007 ether);
+        assertEq(pokemonCards.calculatePrice(3), 0.0000075 ether);
+        assertEq(pokemonCards.calculatePrice(1), 0.000008 ether);
     }
 
     function testMinting() public {

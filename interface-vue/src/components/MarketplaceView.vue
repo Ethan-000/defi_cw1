@@ -36,8 +36,14 @@ export default {
   name: 'MarketplaceView',
   props: {
     account: String,
-    tradingContract: Object,
-    pokemonContract: Object,
+    tradingContract: {
+      type: Object,
+      required: true,
+    },
+    pokemonContract: {
+      type: Object,
+      required: true,
+    }
   },
   setup(props) {
     const listings = ref([])
@@ -49,7 +55,7 @@ export default {
       const events = await props.tradingContract.queryFilter(filter)
 
       const activeListings = await Promise.all(
-        events.map(async (event) => {
+        events.map(async (event: { args: { tokenId: number } }) => {
           const listing = await props.tradingContract.listings(event.args.tokenId)
           if (listing.active) {
             const tokenURI = await props.pokemonContract.tokenURI(event.args.tokenId)

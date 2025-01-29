@@ -21,3 +21,6 @@ Cargo.lock
 #.idea/
 
 .DS_Store
+.env
+scripts/
+testing/

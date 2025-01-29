@@ -68,14 +68,28 @@ export default {
   name: 'MyCardsView',
   props: {
     account: String,
-    tradingContract: Object,
-    pokemonContract: Object,
+    tradingContract: {
+      type: Object,
+      required: true,
+    },
+    pokemonContract: {
+      type: Object,
+      required: true,
+    },
   },
   setup(props) {
-    const myCards = ref([])
+    interface Card {
+      tokenId: number;
+      imageUrl: string;
+      isListed: boolean;
+      listingPrice: string;
+    }
+
+    const myCards = ref<Card[]>([])
     const mintAmount = ref(1)
 
     const loadMyCards = async () => {
+      console.log("pokemonContract", props.pokemonContract.address)
       const balance = await props.pokemonContract.balanceOf(props.account)
       const cards = []
 
@@ -97,6 +111,9 @@ export default {
     const mintCards = async () => {
       try {
         const price = await props.pokemonContract.calculatePrice(mintAmount.value)
+
+        console.log('Minting', mintAmount.value, 'cards for', price, 'ETH')
+
         const tx = await props.pokemonContract.mintPokemonCards(mintAmount.value, {
           value: price * mintAmount.value,
         })
@@ -107,7 +124,7 @@ export default {
       }
     }
 
-    const listCard = async (card, isAuction) => {
+    const listCard = async (card: Card, isAuction: boolean) => {
       try {
         // Approve trading contract if not already approved
         const isApproved = await props.pokemonContract.isApprovedForAll(
