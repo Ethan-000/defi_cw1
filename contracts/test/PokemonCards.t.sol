@@ -2,77 +2,180 @@
 pragma solidity ^0.8.19;
 
 import "forge-std/Test.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "../src/PokemonCards.sol"; // Adjust the path if needed
+import "../src/PokemonCards.sol";
 
 contract PokemonCardsTest is Test {
     PokemonCards public pokemonCards;
     address public owner;
     address public user1;
     address public user2;
+    
+    // Events from the contract to test
+    event ProvenanceHashUpdated(string newHash);
+    event SaleStateUpdated(bool isActive);
+    event BaseURIUpdated(string newBaseURI);
+    event WhitelistUpdated(address indexed user, bool isTwoTokens);
+    event TokensMinted(address indexed to, uint256 numberOfTokens, uint256 price);
 
-    // Constants for testing
-    uint256 public constant MAX_POKEMON_CARDS = 10000;
-    uint256 public constant MAX_PURCHASE = 10;
+    receive() external payable {}
 
     function setUp() public {
-        // Deploy the contract
-        owner = address(this); // The test contract will be the owner
+        owner = address(this);
         user1 = address(0x123);
         user2 = address(0x456);
+        vm.label(user1, "User 1");
+        vm.label(user2, "User 2");
         
         pokemonCards = new PokemonCards();
     }
 
     function testInitialState() public view {
-        // Test initial conditions
         assertEq(pokemonCards.saleIsActive(), false);
         assertEq(pokemonCards.standardPokemonCardsCount(), 0);
         assertEq(pokemonCards.PokemonCards_PROVENANCE(), "");
+        assertEq(pokemonCards.isContractPaused(), false);
+    }
+
+    function testSetProvenanceHash() public {
+        string memory newHash = "testHash123";
+        vm.expectEmit(true, true, true, true);
+        emit ProvenanceHashUpdated(newHash);
+        pokemonCards.setProvenanceHash(newHash);
+        assertEq(pokemonCards.PokemonCards_PROVENANCE(), newHash);
+    }
+
+    function testSetProvenanceHashRevertOnEmpty() public {
+        vm.expectRevert("Empty hash not allowed");
+        pokemonCards.setProvenanceHash("");
     }
 
     function testFlipSaleState() public {
-        // Test the flipping of sale state
+        vm.expectEmit(true, true, true, true);
+        emit SaleStateUpdated(true);
         pokemonCards.flipSaleState();
-        assertEq(pokemonCards.saleIsActive(), true);
+        assertTrue(pokemonCards.saleIsActive());
 
+        vm.expectEmit(true, true, true, true);
+        emit SaleStateUpdated(false);
         pokemonCards.flipSaleState();
-        assertEq(pokemonCards.saleIsActive(), false);
+        assertFalse(pokemonCards.saleIsActive());
+    }
+
+    function testSetBaseURI() public {
+        string memory newURI = "ipfs://test/";
+        vm.expectEmit(true, true, true, true);
+        emit BaseURIUpdated(newURI);
+        pokemonCards.setBaseURI(newURI);
+    }
+
+    function testWhitelistOperations() public {
+        address[] memory addresses = new address[](2);
+        addresses[0] = user1;
+        addresses[1] = user2;
+
+        // Test whitelist one
+        vm.expectEmit(true, true, true, true);
+        emit WhitelistUpdated(user1, false);
+        pokemonCards.editWhitelistOne(addresses);
+        assertTrue(pokemonCards.whitelistOneMint(user1));
+        assertTrue(pokemonCards.whitelistOneMint(user2));
+
+        // Test whitelist two
+        vm.expectEmit(true, true, true, true);
+        emit WhitelistUpdated(user1, true);
+        pokemonCards.editWhitelistTwo(addresses);
+        assertTrue(pokemonCards.whitelistTwoMint(user1));
+        assertTrue(pokemonCards.whitelistTwoMint(user2));
+    }
+
+    function testWhitelistMinting() public {
+        address[] memory addresses = new address[](1);
+        addresses[0] = user1;
+        pokemonCards.editWhitelistTwo(addresses);
+
+        vm.startPrank(user1);
+        pokemonCards.reserveMintPokemonCards();
+        assertEq(pokemonCards.balanceOf(user1), 2);
+        assertFalse(pokemonCards.whitelistTwoMint(user1));
+        vm.stopPrank();
+    }
+
+    function testPriceCalculation() public view {
+        assertEq(pokemonCards.calculatePrice(10), 0.06 ether);
+        assertEq(pokemonCards.calculatePrice(6), 0.07 ether);
+        assertEq(pokemonCards.calculatePrice(3), 0.075 ether);
+        assertEq(pokemonCards.calculatePrice(1), 0.08 ether);
     }
 
     function testMinting() public {
-        pokemonCards.flipSaleState(); // Activate sale
+        pokemonCards.flipSaleState();
         uint256 tokensToMint = 5;
-
-        // Simulate a minting process from user1
-        vm.startPrank(user1);
-        uint256 pricePerToken = 0.08 ether;
+        uint256 pricePerToken = pokemonCards.calculatePrice(tokensToMint);
         uint256 totalPrice = pricePerToken * tokensToMint;
-        vm.deal(user1, totalPrice); // Send Ether to user1
-        pokemonCards.mintPokemonCards{value: totalPrice}(tokensToMint);
-        assertEq(pokemonCards.balanceOf(user1), tokensToMint);
-        vm.stopPrank();
 
-        // Check the standardPokemonCardsCount
+        vm.startPrank(user1);
+        vm.deal(user1, totalPrice);
+        
+        vm.expectEmit(true, true, true, true);
+        emit TokensMinted(user1, tokensToMint, totalPrice);
+        pokemonCards.mintPokemonCards{value: totalPrice}(tokensToMint);
+        
+        assertEq(pokemonCards.balanceOf(user1), tokensToMint);
         assertEq(pokemonCards.standardPokemonCardsCount(), tokensToMint);
+        vm.stopPrank();
     }
 
-    function testMaxPurchaseLimit() public {
-        // Activate sale and try minting more than allowed tokens
+    function testFailMintingWhenPaused() public {
+        pokemonCards.flipSaleState();
+        pokemonCards.setPaused(true);
+        
+        uint256 tokensToMint = 1;
+        uint256 pricePerToken = pokemonCards.calculatePrice(tokensToMint);
+
+        vm.startPrank(user1);
+        vm.deal(user1, pricePerToken);
+        pokemonCards.mintPokemonCards{value: pricePerToken}(tokensToMint);
+        vm.expectRevert("Contract is paused");
+        vm.stopPrank();
+    }
+
+    function testWithdraw() public {
+        // First mint some tokens to get ETH in the contract
+        pokemonCards.flipSaleState();
+        uint256 tokensToMint = 5;
+        uint256 pricePerToken = pokemonCards.calculatePrice(tokensToMint);
+        uint256 totalPrice = pricePerToken * tokensToMint;
+
+        vm.deal(user1, totalPrice);
+        vm.prank(user1);
+        pokemonCards.mintPokemonCards{value: totalPrice}(tokensToMint);
+
+        // Test withdrawal
+        uint256 initialBalance = address(owner).balance;
+        pokemonCards.withdraw();
+        assertEq(address(pokemonCards).balance, 0);
+        assertEq(address(owner).balance, initialBalance + totalPrice);
+    }
+
+    function testMaxSupply() public {
         pokemonCards.flipSaleState();
         uint256 tokensToMint = 10;
-
-        uint256 pricePerToken = 0.075 ether;
+        uint256 pricePerToken = pokemonCards.calculatePrice(tokensToMint);
         uint256 totalPrice = pricePerToken * tokensToMint;
 
-        // Send enough ether for the purchase
-        vm.deal(user1, totalPrice);
+        // Try to mint more than max supply
+        vm.deal(user1, totalPrice * 1001); // Enough for 10010 tokens
         vm.startPrank(user1);
+        
+        for(uint256 i = 0; i < 1000; i++) {
+            pokemonCards.mintPokemonCards{value: totalPrice}(tokensToMint);
+        }
+        
+        // This should fail as it would exceed max supply
+        vm.expectRevert("Would exceed max supply");
         pokemonCards.mintPokemonCards{value: totalPrice}(tokensToMint);
-
-        // Ensure user can only mint 10 tokens at most
-        assertEq(pokemonCards.balanceOf(user1), 10);
         vm.stopPrank();
-    }
 
+        assertEq(pokemonCards.totalSupply(), 10000);
+    }
 }
