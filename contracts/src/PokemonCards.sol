@@ -1,30 +1,30 @@
 // SPDX-License-Identifier: MIT
+
+// Adapted from Milady Contract https://etherscan.io/address/0x5af0d9827e0c53e4799bb226655a1de152a425a5
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-contract PokemonCards is ERC721, Ownable, ReentrancyGuard {
+contract PokemonCards is ERC721Enumerable, Ownable, ReentrancyGuard {
     // Events
     event ProvenanceHashUpdated(string newHash);
     event SaleStateUpdated(bool isActive);
-    event BaseURIUpdated(string newBaseURI);
     event WhitelistUpdated(address indexed user, bool isTwoTokens);
     event TokensMinted(address indexed to, uint256 numberOfTokens, uint256 price);
     
     string public PokemonCards_PROVENANCE = "";
     uint256 public constant MAX_POKEMON_CARDS_PURCHASE = 10;
-    uint256 public constant MAX_POKEMON_CARDS = 10000;
-    uint256 public constant PRICE_TEN_TOKENS = 0.06 ether;    // Price for 10 tokens
-    uint256 public constant PRICE_SIX_TO_NINE = 0.07 ether;   // Price for 6-9 tokens
-    uint256 public constant PRICE_THREE_TO_FIVE = 0.075 ether; // Price for 3-5 tokens
-    uint256 public constant PRICE_ONE_TO_TWO = 0.08 ether;    // Price for 1-2 tokens
+    uint256 public constant MAX_POKEMON_CARDS = 250;
+    uint256 public constant PRICE_TEN_TOKENS = 0.00006 ether;    // Price for 10 tokens
+    uint256 public constant PRICE_SIX_TO_NINE = 0.00007 ether;   // Price for 6-9 tokens
+    uint256 public constant PRICE_THREE_TO_FIVE = 0.000075 ether; // Price for 3-5 tokens
+    uint256 public constant PRICE_ONE_TO_TWO = 0.00008 ether;    // Price for 1-2 tokens
     
     bool public saleIsActive = false;
     bool public isContractPaused = false;
     uint256 public standardPokemonCardsCount = 0;
-    uint256 private _tokenIds;
     string private _baseTokenURI;
 
     mapping(address => bool) public whitelistOneMint;
@@ -35,7 +35,10 @@ contract PokemonCards is ERC721, Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor() ERC721("PokemonCards", "PKMN") Ownable(msg.sender) {}
+    constructor(string memory baseURI) ERC721("PokemonCards", "PKMN") Ownable(msg.sender) {
+        require(bytes(baseURI).length > 0, "Empty URI not allowed");
+        _baseTokenURI = baseURI;
+    }
 
     function setProvenanceHash(string calldata provenanceHash) external onlyOwner {
         require(bytes(provenanceHash).length > 0, "Empty hash not allowed");
@@ -77,7 +80,7 @@ contract PokemonCards is ERC721, Ownable, ReentrancyGuard {
 
     function reserveMintPokemonCards() external whenNotPaused nonReentrant {
         require(whitelistTwoMint[msg.sender] || whitelistOneMint[msg.sender], "Not whitelisted");
-        require(_tokenIds < MAX_POKEMON_CARDS, "Max supply reached");
+        require(totalSupply() < MAX_POKEMON_CARDS, "Max supply reached");
         
         uint256 mintAmount;
         if (whitelistTwoMint[msg.sender]) {
@@ -88,15 +91,10 @@ contract PokemonCards is ERC721, Ownable, ReentrancyGuard {
             mintAmount = 1;
         }
 
-        // Ensure we don't exceed max supply
-        mintAmount = _tokenIds + mintAmount > MAX_POKEMON_CARDS ? 
-            MAX_POKEMON_CARDS - _tokenIds : 
-            mintAmount;
-
-        for (uint256 i = 0; i < mintAmount; i++) {
-            _tokenIds++;
-            _safeMint(msg.sender, _tokenIds);
-            standardPokemonCardsCount++;
+        uint i;
+        for (i = 0; i < mintAmount && totalSupply() < MAX_POKEMON_CARDS; i++) {
+            uint supply = totalSupply();
+            _safeMint(msg.sender, supply);
         }
     }
 
@@ -111,12 +109,6 @@ contract PokemonCards is ERC721, Ownable, ReentrancyGuard {
 
     function _baseURI() internal view override returns (string memory) {
         return _baseTokenURI;
-    }
-
-    function setBaseURI(string calldata baseURI) external onlyOwner {
-        require(bytes(baseURI).length > 0, "Empty URI not allowed");
-        _baseTokenURI = baseURI;
-        emit BaseURIUpdated(baseURI);
     }
 
     function calculatePrice(uint256 numberOfTokens) public pure returns (uint256) {
@@ -139,15 +131,13 @@ contract PokemonCards is ERC721, Ownable, ReentrancyGuard {
         require(msg.value == totalPrice, "Incorrect payment amount");
 
         for(uint256 i = 0; i < numberOfTokens; i++) {
-            _tokenIds++;
-            _safeMint(msg.sender, _tokenIds);
-            standardPokemonCardsCount++;
+            if (standardPokemonCardsCount < MAX_POKEMON_CARDS) {
+                _safeMint(msg.sender, totalSupply());
+                standardPokemonCardsCount++;
+            }
         }
         
         emit TokensMinted(msg.sender, numberOfTokens, totalPrice);
     }
 
-    function totalSupply() external view returns (uint256) {
-        return _tokenIds;
-    }
 }

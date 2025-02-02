@@ -16,10 +16,7 @@ const ListCard = ({ pokemonCards, tradingPlatform, account }) => {
         duration * 86400 // Convert days to seconds
       );
     } else {
-      await tradingPlatform.listCard(
-        tokenId,
-        ethers.parseEther(price)
-      );
+      await tradingPlatform.listCard(tokenId, ethers.parseEther(price));
     }
   };
 

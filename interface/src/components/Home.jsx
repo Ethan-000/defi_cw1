@@ -5,7 +5,7 @@ const Home = ({ listings, pokemonCards, tradingPlatform, account }) => {
   const handlePurchase = async (tokenId, price) => {
     try {
       const tx = await tradingPlatform.purchaseCard(tokenId, {
-        value: ethers.parseEther(price.toString())
+        value: ethers.parseEther(price.toString()),
       });
       await tx.wait();
     } catch (error) {
@@ -28,7 +28,7 @@ const Home = ({ listings, pokemonCards, tradingPlatform, account }) => {
             ) : (
               <>
                 <p>Price: {ethers.formatEther(listing.price)} ETH</p>
-                <button 
+                <button
                   onClick={() => handlePurchase(listing.tokenId, listing.price)}
                   disabled={!account}
                 >

@@ -1,5 +1,6 @@
 /* General Styles */
-body, html {
+body,
+html {
   margin: 0;
   padding: 0;
   height: 100%;
@@ -64,13 +65,6 @@ body, html {
 }
 
 /* Wallet Connection */
-.wallet-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  white-space: nowrap; /* Prevent wallet info from wrapping */
-}
-
 .wallet-info button {
   background-color: #03dac6;
   color: white;
@@ -79,14 +73,20 @@ body, html {
   border-radius: 4px;
   cursor: pointer;
   font-size: 1rem;
+  transition: all 0.2s;
 }
 
-.wallet-info button:hover {
+.wallet-info button.connected-address {
+  background-color: #4a5568; /* Different color for connected state */
+  cursor: default;
+}
+
+.wallet-info button.connected-address:hover {
+  background-color: #4a5568; /* Disable hover effect */
+}
+
+.wallet-info button:hover:not(.connected-address) {
   background-color: #018786;
-}
-
-.wallet-info span {
-  font-size: 0.9rem;
 }
 
 /* Main Content */
@@ -139,7 +139,8 @@ body, html {
 }
 
 /* Form Styles */
-.list-form, .auction {
+.list-form,
+.auction {
   max-width: 600px;
   margin: 0 auto;
   padding: 2rem;
@@ -148,12 +149,14 @@ body, html {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.list-form h2, .auction h2 {
+.list-form h2,
+.auction h2 {
   margin-top: 0;
   color: #6200ee;
 }
 
-.list-form input, .auction input {
+.list-form input,
+.auction input {
   width: 100%;
   padding: 0.5rem;
   margin-bottom: 1rem;
@@ -173,6 +176,11 @@ body, html {
 }
 
 /* Collection Page */
+.collection {
+  padding: 2rem;
+  text-align: center;
+}
+
 .collection h2 {
   color: #6200ee;
   margin-bottom: 2rem;
@@ -182,6 +190,7 @@ body, html {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1.5rem;
+  padding: 0;
 }
 
 .card-item {
@@ -190,11 +199,42 @@ body, html {
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
+  transition: transform 0.2s;
+}
+
+.card-item:hover {
+  transform: translateY(-5px);
 }
 
 .card-item h3 {
   margin: 0;
   color: #6200ee;
+  font-size: 1.25rem;
+}
+
+.card-item img {
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.card-item p {
+  margin: 0.5rem 0;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.card-item .token-id {
+  margin: 0.5rem 0;
+  color: #777;
+  font-size: 0.9rem;
+  font-weight: bold;
+  background-color: #f0f0f0;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: inline-block;
 }
 
 /* Auction Page */
@@ -279,4 +319,99 @@ body, html {
 .mint-form p {
   margin-top: 1rem;
   color: #555;
+}
+
+/* Listing Modal */
+.listing-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.form-group input[type="number"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.submit-button, .cancel-button {
+  flex: 1;
+  padding: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.submit-button {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.submit-button:disabled {
+  background-color: #81C784;
+  cursor: not-allowed;
+}
+
+.cancel-button {
+  background-color: #f44336;
+  color: white;
+}
+
+.error-message {
+  color: #d32f2f;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  background-color: #ffebee;
+  border-radius: 4px;
+}
+
+.list-button {
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.2s;
+}
+
+.list-button:hover {
+  background-color: #1976D2;
 }

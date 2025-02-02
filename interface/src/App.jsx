@@ -7,16 +7,15 @@ import './App.css';
 import Home from './components/Home';
 import MyCollection from './components/MyCollection';
 import ListCard from './components/ListCard';
-import Auction from './components/Auction';
-import MintPokemonCard from './components/MintPokemonCard'; // Import the new component
+import MintPokemonCard from './components/MintPokemonCard';
 
 // Contract ABIs
 import PokemonCardsABI from '../../contracts/out/PokemonCards.sol/PokemonCards.json';
 import TradingPlatformABI from '../../contracts/out/TradingPlatform.sol/TradingPlatform.json';
 
 const CONTRACT_ADDRESSES = {
-  pokemonCards: "0x5Fb...", // Your deployed address
-  tradingPlatform: "0x3A4..." // Your deployed address
+  pokemonCards: '0xC3062018402e0A74f74090C1e8c420aDb7452f94',
+  tradingPlatform: '0xE7bEC2A1377d671B06a148EB3cc257fF0197FAb7',
 };
 
 function App() {
@@ -34,16 +33,16 @@ function App() {
         const web3Provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await web3Provider.getSigner();
         const account = await signer.getAddress();
-        
+
         const pokemonCardsContract = new ethers.Contract(
           CONTRACT_ADDRESSES.pokemonCards,
-          PokemonCardsABI,
+          PokemonCardsABI.abi,
           signer
         );
 
         const tradingPlatformContract = new ethers.Contract(
           CONTRACT_ADDRESSES.tradingPlatform,
-          TradingPlatformABI,
+          TradingPlatformABI.abi,
           signer
         );
 
@@ -57,7 +56,6 @@ function App() {
         window.ethereum.on('accountsChanged', (accounts) => {
           setAccount(accounts[0]);
         });
-
       } catch (error) {
         console.error(error);
       }
@@ -74,7 +72,7 @@ function App() {
             return { ...listing, tokenId: event.args.tokenId };
           })
         );
-        setListings(activeListings.filter(l => l.active));
+        setListings(activeListings.filter((l) => l.active));
       }
     };
     loadListings();
@@ -94,9 +92,13 @@ function App() {
           </nav>
           <div className="wallet-info">
             {!account ? (
-              <button onClick={connectWallet}>Connect Wallet</button>
+              <button onClick={connectWallet} className="connect-button">
+                Connect Wallet
+              </button>
             ) : (
-              <span>Connected: {account.slice(0, 6)}...{account.slice(-4)}</span>
+              <button className="connected-address" disabled>
+                {`${account.slice(0, 6)}...${account.slice(-4)}`}
+              </button>
             )}
           </div>
         </div>
@@ -104,39 +106,42 @@ function App() {
         {/* Main Content */}
         <div className="main-content">
           <Routes>
-            <Route path="/" element={
-              <Home 
-                listings={listings}
-                pokemonCards={pokemonCards}
-                tradingPlatform={tradingPlatform}
-                account={account}
-              />
-            } />
-            <Route path="/my-collection" element={
-              <MyCollection 
-                pokemonCards={pokemonCards}
-                account={account}
-              />
-            } />
-            <Route path="/list-card" element={
-              <ListCard 
-                pokemonCards={pokemonCards}
-                tradingPlatform={tradingPlatform}
-                account={account}
-              />
-            } />
-            <Route path="/auction/:tokenId" element={
-              <Auction 
-                tradingPlatform={tradingPlatform}
-                account={account}
-              />
-            } />
-            <Route path="/mint-card" element={
-              <MintPokemonCard 
-                pokemonCards={pokemonCards}
-                account={account}
-              />
-            } />
+            <Route
+              path="/"
+              element={
+                <Home
+                  listings={listings}
+                  pokemonCards={pokemonCards}
+                  tradingPlatform={tradingPlatform}
+                  account={account}
+                />
+              }
+            />
+            <Route
+              path="/my-collection"
+              element={
+                <MyCollection pokemonCards={pokemonCards} account={account} />
+              }
+            />
+            <Route
+              path="/list-card"
+              element={
+                <ListCard
+                  pokemonCards={pokemonCards}
+                  tradingPlatform={tradingPlatform}
+                  account={account}
+                />
+              }
+            />
+            <Route
+              path="/mint-card"
+              element={
+                <MintPokemonCard
+                  pokemonCards={pokemonCards}
+                  account={account}
+                />
+              }
+            />
           </Routes>
         </div>
       </div>

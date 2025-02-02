@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: MIT
+
+// TODO: This contract needs testing
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
+
+// TODO: Change this to IERC721Enumerable
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract TradingPlatform is ReentrancyGuard, Pausable {

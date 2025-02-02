@@ -1,5 +1,6 @@
 // components/MintPokemonCard.jsx
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { ethers } from 'ethers';
 
 const MintPokemonCard = ({ pokemonCards, account }) => {
@@ -19,7 +20,7 @@ const MintPokemonCard = ({ pokemonCards, account }) => {
 
       // Calculate the price based on the number of tokens
       const price = await pokemonCards.calculatePrice(numberOfTokens);
-      const totalPrice = price.mul(numberOfTokens);
+      const totalPrice = price * BigInt(numberOfTokens);
 
       // Call the mint function in the smart contract
       const tx = await pokemonCards.mintPokemonCards(numberOfTokens, {
@@ -57,6 +58,13 @@ const MintPokemonCard = ({ pokemonCards, account }) => {
       </div>
     </div>
   );
+};
+MintPokemonCard.propTypes = {
+  pokemonCards: PropTypes.shape({
+    calculatePrice: PropTypes.func.isRequired,
+    mintPokemonCards: PropTypes.func.isRequired,
+  }).isRequired,
+  account: PropTypes.string,
 };
 
 export default MintPokemonCard;

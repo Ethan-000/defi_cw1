@@ -26,7 +26,7 @@ contract PokemonCardsTest is Test {
         vm.label(user1, "User 1");
         vm.label(user2, "User 2");
         
-        pokemonCards = new PokemonCards();
+        pokemonCards = new PokemonCards("ipfs://test/");
     }
 
     function testInitialState() public view {
@@ -59,13 +59,6 @@ contract PokemonCardsTest is Test {
         emit SaleStateUpdated(false);
         pokemonCards.flipSaleState();
         assertFalse(pokemonCards.saleIsActive());
-    }
-
-    function testSetBaseURI() public {
-        string memory newURI = "ipfs://test/";
-        vm.expectEmit(true, true, true, true);
-        emit BaseURIUpdated(newURI);
-        pokemonCards.setBaseURI(newURI);
     }
 
     function testWhitelistOperations() public {
@@ -101,10 +94,10 @@ contract PokemonCardsTest is Test {
     }
 
     function testPriceCalculation() public view {
-        assertEq(pokemonCards.calculatePrice(10), 0.06 ether);
-        assertEq(pokemonCards.calculatePrice(6), 0.07 ether);
-        assertEq(pokemonCards.calculatePrice(3), 0.075 ether);
-        assertEq(pokemonCards.calculatePrice(1), 0.08 ether);
+        assertEq(pokemonCards.calculatePrice(10), 0.00006 ether);
+        assertEq(pokemonCards.calculatePrice(6), 0.00007 ether);
+        assertEq(pokemonCards.calculatePrice(3), 0.000075 ether);
+        assertEq(pokemonCards.calculatePrice(1), 0.00008 ether);
     }
 
     function testMinting() public {
@@ -159,15 +152,15 @@ contract PokemonCardsTest is Test {
 
     function testMaxSupply() public {
         pokemonCards.flipSaleState();
-        uint256 tokensToMint = 10;
+        uint256 tokensToMint = 1;
         uint256 pricePerToken = pokemonCards.calculatePrice(tokensToMint);
         uint256 totalPrice = pricePerToken * tokensToMint;
 
         // Try to mint more than max supply
-        vm.deal(user1, totalPrice * 1001); // Enough for 10010 tokens
+        vm.deal(user1, totalPrice * 251); // Enough for 251 tokens
         vm.startPrank(user1);
         
-        for(uint256 i = 0; i < 1000; i++) {
+        for(uint256 i = 0; i < 250; i++) {
             pokemonCards.mintPokemonCards{value: totalPrice}(tokensToMint);
         }
         
@@ -176,6 +169,6 @@ contract PokemonCardsTest is Test {
         pokemonCards.mintPokemonCards{value: totalPrice}(tokensToMint);
         vm.stopPrank();
 
-        assertEq(pokemonCards.totalSupply(), 10000);
+        assertEq(pokemonCards.totalSupply(), 250);
     }
 }
