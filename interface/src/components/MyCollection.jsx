@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import PropTypes from 'prop-types';
+import { convertIPFSURI } from './utils';
 
 const MyCollection = ({ pokemonCards, tradingPlatform, account }) => {
   const [ownedTokens, setOwnedTokens] = useState([]);
@@ -8,7 +10,7 @@ const MyCollection = ({ pokemonCards, tradingPlatform, account }) => {
   const [formData, setFormData] = useState({
     price: '',
     duration: '',
-    isAuction: false
+    isAuction: false,
   });
   const [txStatus, setTxStatus] = useState('');
 
@@ -17,25 +19,30 @@ const MyCollection = ({ pokemonCards, tradingPlatform, account }) => {
       if (pokemonCards && account) {
         const balance = await pokemonCards.balanceOf(account);
         const tokens = [];
-        
+
         for (let i = 0; i < balance; i++) {
           const tokenId = await pokemonCards.tokenOfOwnerByIndex(account, i);
           const tokenURI = await pokemonCards.tokenURI(tokenId);
-          
+
           // Handle IPFS path adjustment
-          const ipfsPath = tokenURI.replace('ipfs://', '');
-          const pathSegments = ipfsPath.split('/');
-          const lastSegment = pathSegments[pathSegments.length - 1];
-          
-          if (!isNaN(lastSegment)) {
-            pathSegments[pathSegments.length - 1] = (parseInt(lastSegment) + 1).toString();
-          } else {
-            pathSegments.push('1');
-          }
-          
-          const metadata = await fetch(`https://ipfs.io/ipfs/${pathSegments.join('/')}`)
-            .then(res => res.json());
-            
+          // const ipfsPath = tokenURI.replace('ipfs://', '');
+          // const pathSegments = ipfsPath.split('/');
+          // const lastSegment = pathSegments[pathSegments.length - 1];
+
+          // if (!isNaN(lastSegment)) {
+          //   pathSegments[pathSegments.length - 1] = (
+          //     parseInt(lastSegment) + 1
+          //   ).toString();
+          // } else {
+          //   pathSegments.push('1');
+          // }
+
+          const pathSegments = convertIPFSURI(tokenURI);
+
+          const metadata = await fetch(
+            `https://ipfs.io/ipfs/${pathSegments}`
+          ).then((res) => res.json());
+
           tokens.push({ tokenId, metadata });
         }
         setOwnedTokens(tokens);
@@ -52,16 +59,26 @@ const MyCollection = ({ pokemonCards, tradingPlatform, account }) => {
   const handleListSubmit = async (e) => {
     e.preventDefault();
     setTxStatus('Processing...');
-    
+
     try {
+
+      const tradingPlatformAddress = await tradingPlatform.getAddress();
+      // Check if tradingPlatform is defined
+      if (!tradingPlatform || !tradingPlatformAddress) {
+        throw new Error('Trading platform contract is not available');
+      }
+
       // First approve the trading platform to transfer the token
       setTxStatus('Approving token transfer...');
-      const approveTx = await pokemonCards.approve(tradingPlatform.address, selectedToken);
+      const approveTx = await pokemonCards.approve(
+        tradingPlatformAddress,
+        selectedToken
+      );
       await approveTx.wait();
 
       // Then create the listing
       setTxStatus('Creating listing...');
-      
+
       if (formData.isAuction) {
         await tradingPlatform.createAuction(
           selectedToken,
@@ -92,11 +109,13 @@ const MyCollection = ({ pokemonCards, tradingPlatform, account }) => {
         {ownedTokens.map(({ tokenId, metadata }) => (
           <div key={tokenId.toString()} className="card-item">
             <h3>{metadata.name}</h3>
-            <img src={metadata.image.replace('ipfs://', 'https://ipfs.io/ipfs/')} 
-                 alt={metadata.name} 
-                 className="card-image" />
+            <img
+              src={metadata.image.replace('ipfs://', 'https://ipfs.io/ipfs/')}
+              alt={metadata.name}
+              className="card-image"
+            />
             <p className="token-id">Token ID: {tokenId.toString()}</p>
-            <button 
+            <button
               onClick={() => initiateListing(tokenId)}
               className="list-button"
             >
@@ -119,7 +138,9 @@ const MyCollection = ({ pokemonCards, tradingPlatform, account }) => {
                   step="0.01"
                   min="0.01"
                   value={formData.price}
-                  onChange={(e) => setFormData({...formData, price: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -129,7 +150,9 @@ const MyCollection = ({ pokemonCards, tradingPlatform, account }) => {
                   <input
                     type="checkbox"
                     checked={formData.isAuction}
-                    onChange={(e) => setFormData({...formData, isAuction: e.target.checked})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isAuction: e.target.checked })
+                    }
                   />
                   Auction Listing
                 </label>
@@ -142,24 +165,26 @@ const MyCollection = ({ pokemonCards, tradingPlatform, account }) => {
                     type="number"
                     min="1"
                     value={formData.duration}
-                    onChange={(e) => setFormData({...formData, duration: e.target.value})}
+                    onChange={(e) =>
+                      setFormData({ ...formData, duration: e.target.value })
+                    }
                     required
                   />
                 </div>
               )}
 
               <div className="form-actions">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => setShowListingForm(false)}
                   className="cancel-button"
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="submit-button"
-                  disabled={txStatus.includes('Processing')}
+                  disabled={txStatus.includes('Processing') || !tradingPlatform}
                 >
                   {txStatus ? txStatus : 'Confirm Listing'}
                 </button>
@@ -174,6 +199,12 @@ const MyCollection = ({ pokemonCards, tradingPlatform, account }) => {
       )}
     </div>
   );
+};
+
+MyCollection.propTypes = {
+  pokemonCards: PropTypes.object.isRequired,
+  tradingPlatform: PropTypes.object, // Made optional for safety
+  account: PropTypes.string.isRequired,
 };
 
 export default MyCollection;

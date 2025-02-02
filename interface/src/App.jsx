@@ -6,7 +6,7 @@ import './App.css';
 // Components
 import Home from './components/Home';
 import MyCollection from './components/MyCollection';
-import ListCard from './components/ListCard';
+import Marketplace from './components/MarketPlace';
 import MintPokemonCard from './components/MintPokemonCard';
 
 // Contract ABIs
@@ -86,8 +86,8 @@ function App() {
           <h1>Pokémon Trading</h1>
           <nav>
             <Link to="/">Home</Link>
+            <Link to="/market-place">Market Place</Link>
             <Link to="/my-collection">My Collection</Link>
-            <Link to="/list-card">List Card</Link>
             <Link to="/mint-card">Mint Card</Link> {/* Add Mint Card link */}
           </nav>
           <div className="wallet-info">
@@ -120,13 +120,17 @@ function App() {
             <Route
               path="/my-collection"
               element={
-                <MyCollection pokemonCards={pokemonCards} account={account} />
+                <MyCollection
+                  pokemonCards={pokemonCards}
+                  tradingPlatform={tradingPlatform} // Pass the tradingPlatform prop
+                  account={account}
+                />
               }
             />
             <Route
-              path="/list-card"
+              path="/market-place"
               element={
-                <ListCard
+                <Marketplace
                   pokemonCards={pokemonCards}
                   tradingPlatform={tradingPlatform}
                   account={account}

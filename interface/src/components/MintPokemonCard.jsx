@@ -1,7 +1,6 @@
 // components/MintPokemonCard.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import PropTypes from 'prop-types';
-import { ethers } from 'ethers';
 
 const MintPokemonCard = ({ pokemonCards, account }) => {
   const [numberOfTokens, setNumberOfTokens] = useState(1);
