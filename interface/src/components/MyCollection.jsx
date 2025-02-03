@@ -135,8 +135,8 @@ const MyCollection = ({ pokemonCards, tradingPlatform, account }) => {
                 <label>Price (ETH):</label>
                 <input
                   type="number"
-                  step="0.01"
-                  min="0.01"
+                  step="0.0001"
+                  min="0.0001"
                   value={formData.price}
                   onChange={(e) =>
                     setFormData({ ...formData, price: e.target.value })
